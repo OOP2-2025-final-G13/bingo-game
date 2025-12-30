@@ -1,9 +1,10 @@
 // ============================================
 // BE② データ管理・状態保持モジュール
+// ファイル名: bingodata.js
 // ============================================
 
 /**
- * BingoData
+ * BingoDataManager
  * 役割：ビンゴゲームの全データ（カード状態、抽選履歴、回数）を一元管理
  * 目的：データの一貫性を保ち、他モジュール（FE・BE①）にデータを提供する
  */
@@ -32,9 +33,17 @@ class BingoDataManager {
    * @param {Array<Array<number>>} card - 5x5の二次元配列
    */
   setCard(card) {
+    // 入力検証：5x5の配列かチェック（5x5以外のカードが渡されてしまった時のための対処用として実装）
+    if (!Array.isArray(card) || card.length !== 5 || 
+        !card.every(row => Array.isArray(row) && row.length === 5)) {
+      console.error('Invalid card format: must be 5x5 array', card);
+      return; // エラーの場合は処理を中断
+    }
+
     this.currentCard = card;
     this.markedPositions = [{row: 2, col: 2}]; // 中央（FREE）を初期マーク
     this.bingoLines = [];
+    this.saveToStorage(); // 自動保存
   }
 
   /**
@@ -57,26 +66,89 @@ class BingoDataManager {
     if (!this.drawnNumbers.includes(number)) {
       this.drawnNumbers.push(number);
       this.drawCount++;
-      this.updateMarkedPositions(number);
+      // 自動マーク機能を削除：抽選時の自動マークは行わず、手動マークのみに変更
+      this.saveToStorage(); // 自動保存
+    }
+  }
+
+  // updateMarkedPositions メソッドを削除
+  // 自動マーク機能が不要になったため、このメソッドは削除されました
+  // 手動マークのみを使用してください
+
+  /**
+   * toggleMarkByPosition(row, col) - 手動で穴あけ/穴埋めを切り替え
+   * 役割：ユーザーがクリックした位置の穴あけ状態をトグル
+   * 目的：口頭で番号を共有→手動で穴あけする運用に対応
+   * @param {number} row - 行番号（0〜4）
+   * @param {number} col - 列番号（0〜4）
+   * @returns {boolean} - マーク後の状態（true: マーク済み, false: 未マーク）
+   */
+  toggleMarkByPosition(row, col) {
+    const index = this.markedPositions.findIndex(
+      pos => pos.row === row && pos.col === col
+    );
+
+    if (index !== -1) {
+      // 既にマーク済み → 削除（穴埋め）
+      this.markedPositions.splice(index, 1);
+      this.saveToStorage(); // 自動保存
+      return false;
+    } else {
+      // 未マーク → 追加（穴あけ）
+      this.markedPositions.push({row, col});
+      this.saveToStorage(); // 自動保存
+      return true;
     }
   }
 
   /**
-   * updateMarkedPositions(number) - カード上のマーク位置を更新
-   * 役割：抽選番号がカードに存在する場合、その位置を記録
-   * 目的：ビンゴ判定とUI表示のための位置情報管理
-   * @param {number} number - 抽選された番号
+   * markByPosition(row, col) - 手動で穴をあける（追加のみ）
+   * 役割：指定位置に穴をあける（既にマーク済みの場合は何もしない）
+   * 目的：確実に穴をあけたい場合に使用
+   * @param {number} row - 行番号（0〜4）
+   * @param {number} col - 列番号（0〜4）
    */
-  updateMarkedPositions(number) {
-    if (!this.currentCard) return;
+  markByPosition(row, col) {
+    const alreadyMarked = this.markedPositions.some(
+      pos => pos.row === row && pos.col === col
+    );
 
-    for (let row = 0; row < 5; row++) {
-      for (let col = 0; col < 5; col++) {
-        if (this.currentCard[row][col] === number) {
-          this.markedPositions.push({row, col});
-        }
-      }
+    if (!alreadyMarked) {
+      this.markedPositions.push({row, col});
+      this.saveToStorage(); // 自動保存
     }
+  }
+
+  /**
+   * unmarkByPosition(row, col) - 手動で穴を埋める（削除のみ）
+   * 役割：指定位置の穴を埋める（未マークの場合は何もしない）
+   * 目的：誤って穴をあけた場合の修正に使用
+   * @param {number} row - 行番号（0〜4）
+   * @param {number} col - 列番号（0〜4）
+   */
+  unmarkByPosition(row, col) {
+    const index = this.markedPositions.findIndex(
+      pos => pos.row === row && pos.col === col
+    );
+
+    if (index !== -1) {
+      this.markedPositions.splice(index, 1);
+      this.saveToStorage(); // 自動保存
+    }
+  }
+
+  /**
+   * isMarked(row, col) - 指定位置がマーク済みか確認
+   * 役割：特定のマスが穴あけ済みか判定
+   * 目的：FEがUIの表示状態を判定する際に使用
+   * @param {number} row - 行番号（0〜4）
+   * @param {number} col - 列番号（0〜4）
+   * @returns {boolean}
+   */
+  isMarked(row, col) {
+    return this.markedPositions.some(
+      pos => pos.row === row && pos.col === col
+    );
   }
 
   /**
@@ -117,6 +189,7 @@ class BingoDataManager {
    */
   setBingoLines(lines) {
     this.bingoLines = lines;
+    this.saveToStorage(); // 自動保存
   }
 
   /**
@@ -147,6 +220,7 @@ class BingoDataManager {
    * saveToStorage() - 現在の状態をLocalStorageに保存
    * 役割：データをブラウザに保存
    * 目的：ページ更新後もデータを復元できるようにする
+   * 注意：データ変更メソッドから自動的に呼ばれます
    */
   saveToStorage() {
     try {
@@ -243,12 +317,9 @@ class BingoDataManager {
   }
 }
 
-// シングルトンインスタンスをエクスポート
+// シングルトンインスタンスを作成してエクスポート
 // 役割：アプリケーション全体で1つのデータ管理インスタンスを共有
 // 目的：データの一貫性を保証する
 const bingoDataManager = new BingoDataManager();
 
-// グローバルスコープに公開（他のモジュールから利用可能にする）
-if (typeof window !== 'undefined') {
-  window.BingoDataManager = bingoDataManager;
-}
+export default bingoDataManager;
