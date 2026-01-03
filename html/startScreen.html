@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ビンゴ抽選システム</title>
+    <link rel="stylesheet" href="../css/startScreenStyle.css">
+</head>
+<body>
+
+<div class="outer-frame">
+    <div class="lottery-header">
+        <div class="header-title">抽選画面</div>
+        <div class="current-number" id="num-display">--</div>
+        <div class="btn-row">
+            <button class="top-btn" onclick="addDrawnNumber()">抽選</button>
+            <button class="top-btn" onclick="showHistory()">履歴</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="card-border">
+            <div class="bingo-grid" id="bingo-card">
+                <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                <div class="cell"></div><div class="cell"></div><div class="cell">free</div><div class="cell"></div><div class="cell"></div>
+                <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            </div>
+        </div>
+
+        <div class="plus-area">＋</div>
+
+        <div class="side-panel">
+            <div class="count-display">
+                <div class="count-label">抽選回数</div>
+                <div class="count-value" id="draw-count">0</div>
+            </div>
+            <button class="action-btn" onclick="generateCard()">カード生成</button>
+            <button class="action-btn" onclick="resetGame()">リセット</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/bingodata.js"></script>
+</body>
+</html>
