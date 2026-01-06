@@ -7,7 +7,17 @@
 </head>
 <body>
 
-<div class="outer-frame">
+<div id="start-screen" class="screen">
+    <h1>BINGO GAME</h1>
+    <div class="input-area">
+        <input type="text" id="name-input" placeholder="名前を入力してください">
+        <button id="start-btn">ゲームスタート</button>
+    </div>
+</div>
+
+<div id="player-name-display" style="display: none;"></div>
+
+<div class="outer-frame" style="display: none;">
     <div class="lottery-header">
         <div class="header-title">抽選画面</div>
         <div class="current-number" id="num-display">--</div>
@@ -75,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderBingoCard(sampleBingoData);
 });
 </script>
-
+<script src="../js/main.js"></script>
 
 </body>
 </html>
