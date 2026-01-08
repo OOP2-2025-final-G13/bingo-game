@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>ビンゴ抽選システム</title>
-    <link rel="stylesheet" href="../css/startScreenStyle.css">
+    <link rel="stylesheet" href="../static/css/index.css">
+    <link rel="stylesheet" href="../static/css/base.css">
 </head>
 
 <body>
@@ -20,7 +21,9 @@
         </div>
 
         <div class="main-layout">
-            <!-- Cards will be injected here by main.js -->
+            <div class="card-border">
+                <div class="bingo-grid" id="bingo-card"></div>
+            </div>
 
             <button class="plus-area" id="btn-add-card">＋</button>
 
@@ -48,7 +51,7 @@
         </div>
     </div>
 
-    <script type="module" src="../js/main.js"></script>
+    <script type="module" src="../static/js/main.js"></script>
 
 </body>
 
