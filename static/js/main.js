@@ -154,20 +154,35 @@ const App = {
     },
 
     handleCardClick(cardIndex, row, col) {
+        const cardState = bingoDataManager.getCard(cardIndex);
+        const number = cardState.grid[row][col];
+
+        // FREEは常にクリック可能（または無視）だが、数字の場合は抽選済みかチェック
+        if (number !== 'FREE') {
+            const drawnNumbers = bingoDataManager.getDrawnNumbers();
+            if (!drawnNumbers.includes(number)) {
+                console.log(`Number ${number} has not been drawn yet.`);
+                return; // 抽選されていない数字はマークできない
+            }
+        }
+
         // 手動マーク切り替え
         bingoDataManager.toggleMarkByPosition(cardIndex, row, col);
 
         // ビンゴ判定 (特定カードのみ)
-        const cardState = bingoDataManager.getCard(cardIndex);
         const lines = BingoGameLogic.checkBingo(
             cardState.grid,
             cardState.markedPositions
         );
         bingoDataManager.setBingoLines(cardIndex, lines);
 
-        if (lines.length > 0) {
+        // ビンゴ通知制御 (1回だけ)
+        const isAnnounced = bingoDataManager.isBingoAnnounced(cardIndex);
+
+        if (lines.length > 0 && !isAnnounced) {
             console.log(`Card ${cardIndex + 1} BINGO!`, lines);
             this.showModal();
+            bingoDataManager.setBingoAnnounced(cardIndex, true);
         }
 
         this.render();
