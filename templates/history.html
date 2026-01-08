@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bingo History</title>
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/effects.css">
+    <link rel="stylesheet" href="../static/css/base.css">
+    <link rel="stylesheet" href="../static/css/effects.css">
 </head>
 
 <body>
@@ -25,15 +25,17 @@
         </footer>
     </div>
 
-    <script src="js/effects.js"></script>
-    <script>
-        // ページ読み込み時に履歴を表示する処理（テスト用）
+    <script type="module" src="../static/js/effects.js"></script>
+    <script type="module">
+        import Effects from '../static/js/effects.js';
+        import bingoDataManager from '../static/js/bingodata.js';
+
         document.addEventListener('DOMContentLoaded', () => {
-            // 本番ではBE②からデータをもらいますが、動作確認用にダミーデータを入れています
-            const dummyHistory = [7, 12, 25, 44, 68, 5, 99];
-            if (typeof renderHistory === 'function') {
-                renderHistory(dummyHistory);
-            }
+            // ローカルストレージからデータを持ってくる
+            bingoDataManager.loadFromStorage();
+            const history = bingoDataManager.getDrawnNumbers();
+
+            if (Effects.renderHistory) Effects.renderHistory(history);
         });
     </script>
 </body>
