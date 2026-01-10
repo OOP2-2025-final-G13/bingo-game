@@ -48,7 +48,8 @@ class BingoDataManager {
     const cardState = {
       grid: grid,
       markedPositions: [{ row: 2, col: 2 }], // 中央（FREE）を初期マーク
-      bingoLines: []
+      bingoLines: [],
+      bingoAnnounced: false,
     };
 
     this.cards.push(cardState);
@@ -148,6 +149,18 @@ class BingoDataManager {
     }
   }
 
+  isBingoAnnounced(cardIndex) {
+    if (!this.cards[cardIndex]) return false;
+    return this.cards[cardIndex].bingoAnnounced || false;
+  }
+
+  setBingoAnnounced(cardIndex, announced) {
+    if (this.cards[cardIndex]) {
+      this.cards[cardIndex].bingoAnnounced = announced;
+      this.saveToStorage();
+    }
+  }
+
   getBingoLines(cardIndex = 0) {
     const card = this.cards[cardIndex];
     return card ? [...card.bingoLines] : [];
@@ -190,7 +203,8 @@ class BingoDataManager {
             const cardState = {
               grid: oldState.currentCard,
               markedPositions: oldState.markedPositions || [],
-              bingoLines: oldState.bingoLines || []
+              bingoLines: oldState.bingoLines || [],
+              bingoAnnounced: false
             };
             this.cards = [cardState];
             this.drawnNumbers = oldState.drawnNumbers || [];
