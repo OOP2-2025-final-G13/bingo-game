@@ -168,6 +168,15 @@ def index():
     """
     return render_template('index.html')
 
+@app.route('/history.html')
+def history():
+    """
+    履歴ページ
+    役割：history.htmlを返す
+    目的：履歴画面を表示
+    """
+    return render_template('history.html')
+
 @app.route('/api/record/best', methods=['GET'])
 def api_get_best_record():
     """
