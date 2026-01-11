@@ -1,227 +1,189 @@
 // ============================================
-// BE② 最短ビンゴ記録管理モジュール
+// 最短ビンゴ記録管理モジュール（サーバー通信版）
 // ファイル名: bingorecord.js
 // ============================================
 
 /**
  * BingoRecordManager
- * 役割：最短ビンゴ記録（回数・タイムスタンプ）を管理
- * 目的：歴代最短記録をDBのように保存・提供する
+ * 役割：Flask APIと通信して最短ビンゴ記録を管理
+ * 目的：サーバー側のDBに記録を保存・取得する
  */
 class BingoRecordManager {
   constructor() {
-    this.init();
-    this.loadFromStorage(); // 起動時に保存データを読み込み
+    this.apiBaseUrl = '/api/record'; // FlaskのAPIベースURL
+    this.cachedBestRecord = null;    // キャッシュ（サーバー通信を減らすため）
   }
 
-  /**
-   * init() - 初期化処理
-   * 役割：記録データを初期状態にリセット
-   * 目的：初回起動時やリセット時に呼び出される
-   */
-  init() {
-    this.bestRecord = null; // 最短ビンゴ記録 {drawCount, timestamp, dateString}
-  }
+  // ============================================
+  // サーバー通信（API呼び出し）
+  // ============================================
 
   /**
-   * updateRecord(drawCount) - 最短記録を更新
-   * 役割：新しいビンゴ達成時に記録を更新（最短のみ保存）
-   * 目的：BE①がビンゴ達成時に呼び出す
-   * @param {number} drawCount - ビンゴ達成時の抽選回数
-   * @returns {boolean} - 記録更新された場合true
+   * fetchBestRecord() - サーバーから最短記録を取得
+   * 役割：GET /api/record/best を呼び出してDBから最短記録を取得
+   * 目的：フロントエンドで記録を表示する際に使用
+   * @returns {Promise<Object|null>} - {id, draw_count, timestamp} または null
    */
-  updateRecord(drawCount) {
-    // 記録が存在しない、または新記録の場合のみ更新
-    if (!this.bestRecord || drawCount < this.bestRecord.drawCount) {
-      const now = new Date();
+  async fetchBestRecord() {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/best`);
+      const result = await response.json();
       
-      this.bestRecord = {
-        drawCount: drawCount,                    // 抽選回数
-        timestamp: now.getTime(),                // UNIXタイムスタンプ（ミリ秒）
-        dateString: this.formatDateTime(now)     // 人間が読める形式
-      };
-      
-      this.saveToStorage(); // 自動保存
-      return true; // 記録更新された
-    }
-    
-    return false; // 記録更新されなかった
-  }
-
-  /**
-   * formatDateTime(date) - 日時を読みやすい形式にフォーマット
-   * 役割：Dateオブジェクトを「YYYY年MM月DD日 HH:MM:SS」形式に変換
-   * 目的：表示用の日時文字列を生成
-   * @param {Date} date - Dateオブジェクト
-   * @returns {string} - フォーマット済み日時文字列
-   */
-  formatDateTime(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    
-    return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * getBestRecord() - 最短記録を取得
-   * 役割：現在の最短ビンゴ記録を返す
-   * 目的：FEが記録を表示する際に使用
-   * @returns {Object|null} - {drawCount, timestamp, dateString} または null（記録なし）
-   */
-  getBestRecord() {
-    if (!this.bestRecord) {
+      if (result.success) {
+        this.cachedBestRecord = result.data; // キャッシュに保存
+        return result.data;
+      } else {
+        console.error('最短記録の取得に失敗:', result.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('サーバー通信エラー:', error);
       return null;
     }
-    
-    // オブジェクトのコピーを返す（元データの保護）
-    return {
-      drawCount: this.bestRecord.drawCount,
-      timestamp: this.bestRecord.timestamp,
-      dateString: this.bestRecord.dateString
-    };
   }
 
   /**
-   * hasBestRecord() - 記録が存在するか確認
-   * 役割：最短記録が保存されているか判定
-   * 目的：FEが「記録なし」表示をするかの判断に使用
+   * addRecord(drawCount) - サーバーに新しい記録を追加
+   * 役割：POST /api/record/add を呼び出してDBに記録を保存
+   * 目的：BE①がビンゴ達成時に呼び出す
+   * @param {number} drawCount - ビンゴ達成時の抽選回数
+   * @returns {Promise<Object|null>} - {id, draw_count, timestamp, is_new_record}
+   */
+  async addRecord(drawCount) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          draw_count: drawCount
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // 新記録の場合、キャッシュを更新
+        if (result.data.is_new_record) {
+          this.cachedBestRecord = {
+            id: result.data.id,
+            draw_count: result.data.draw_count,
+            timestamp: result.data.timestamp
+          };
+        }
+        return result.data;
+      } else {
+        console.error('記録の追加に失敗:', result.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('サーバー通信エラー:', error);
+      return null;
+    }
+  }
+
+  /**
+   * fetchAllRecords() - サーバーから全記録を取得
+   * 役割：GET /api/record/all を呼び出してDBから全記録を取得
+   * 目的：履歴画面での一覧表示に使用
+   * @returns {Promise<Array>} - 記録のリスト
+   */
+  async fetchAllRecords() {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/all`);
+      const result = await response.json();
+      
+      if (result.success) {
+        return result.data;
+      } else {
+        console.error('全記録の取得に失敗:', result.error);
+        return [];
+      }
+    } catch (error) {
+      console.error('サーバー通信エラー:', error);
+      return [];
+    }
+  }
+
+  /**
+   * resetRecords() - サーバーの全記録を削除
+   * 役割：DELETE /api/record/reset を呼び出してDBをクリア
+   * 目的：リセットボタン押下時に使用
+   * @returns {Promise<boolean>} - 成功時true
+   */
+  async resetRecords() {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/reset`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        this.cachedBestRecord = null; // キャッシュをクリア
+        return true;
+      } else {
+        console.error('記録のリセットに失敗:', result.error);
+        return false;
+      }
+    } catch (error) {
+      console.error('サーバー通信エラー:', error);
+      return false;
+    }
+  }
+
+  // ============================================
+  // 簡易アクセスメソッド（キャッシュ利用）
+  // ============================================
+
+  /**
+   * getBestRecord() - 最短記録を取得（キャッシュ優先）
+   * 役割：キャッシュがあればそれを返し、なければサーバーから取得
+   * 目的：頻繁に呼ばれる場合の通信削減
+   * @returns {Promise<Object|null>}
+   */
+  async getBestRecord() {
+    if (this.cachedBestRecord) {
+      return this.cachedBestRecord;
+    }
+    return await this.fetchBestRecord();
+  }
+
+  /**
+   * refreshBestRecord() - 最短記録を強制的に再取得
+   * 役割：キャッシュを無視してサーバーから取得
+   * 目的：データの最新化が必要な場合に使用
+   * @returns {Promise<Object|null>}
+   */
+  async refreshBestRecord() {
+    return await this.fetchBestRecord();
+  }
+
+  // ============================================
+  // ユーティリティメソッド
+  // ============================================
+
+  /**
+   * hasCachedRecord() - キャッシュに記録があるか確認
+   * 役割：サーバー通信なしで記録の有無を確認
+   * 目的：高速な判定が必要な場合に使用
    * @returns {boolean}
    */
-  hasBestRecord() {
-    return this.bestRecord !== null;
+  hasCachedRecord() {
+    return this.cachedBestRecord !== null;
   }
 
   /**
-   * getRecordDrawCount() - 最短回数のみを取得
-   * 役割：抽選回数だけを返す（簡易版）
-   * 目的：数値のみ必要な場合に使用
-   * @returns {number|null}
+   * formatDateTime(dateString) - 日時文字列を整形
+   * 役割：サーバーから受け取った日時を表示用に整形
+   * 目的：UI表示の統一
+   * @param {string} dateString - 日時文字列
+   * @returns {string}
    */
-  getRecordDrawCount() {
-    return this.bestRecord ? this.bestRecord.drawCount : null;
-  }
-
-  /**
-   * getRecordTimestamp() - タイムスタンプのみを取得
-   * 役割：UNIXタイムスタンプを返す
-   * 目的：時系列ソートや計算に使用
-   * @returns {number|null}
-   */
-  getRecordTimestamp() {
-    return this.bestRecord ? this.bestRecord.timestamp : null;
-  }
-
-  /**
-   * getRecordDateString() - 日時文字列のみを取得
-   * 役割：フォーマット済み日時を返す
-   * 目的：FEが直接表示する際に使用
-   * @returns {string|null}
-   */
-  getRecordDateString() {
-    return this.bestRecord ? this.bestRecord.dateString : null;
-  }
-
-  /**
-   * resetRecord() - 記録をリセット
-   * 役割：保存されている記録を削除
-   * 目的：「記録リセット」ボタン押下時に呼び出される
-   */
-  resetRecord() {
-    this.init();
-    this.clearStorage();
-  }
-
-  // ============================================
-  // LocalStorage連携（永続化機能）
-  // ============================================
-
-  /**
-   * saveToStorage() - 記録をLocalStorageに保存
-   * 役割：最短記録をブラウザに保存
-   * 目的：ページ更新後も記録を保持
-   */
-  saveToStorage() {
-    try {
-      const data = {
-        bestRecord: this.bestRecord
-      };
-      localStorage.setItem('bingoRecordData', JSON.stringify(data));
-    } catch (e) {
-      console.error('記録の保存に失敗:', e);
-    }
-  }
-
-  /**
-   * loadFromStorage() - LocalStorageから記録を復元
-   * 役割：保存された記録を読み込む
-   * 目的：ページ読み込み時に前回の記録を復元
-   * @returns {boolean} - 復元成功時true
-   */
-  loadFromStorage() {
-    try {
-      const saved = localStorage.getItem('bingoRecordData');
-      if (saved) {
-        const data = JSON.parse(saved);
-        this.bestRecord = data.bestRecord || null;
-        return true;
-      }
-    } catch (e) {
-      console.error('記録の読み込みに失敗:', e);
-    }
-    return false;
-  }
-
-  /**
-   * clearStorage() - LocalStorageをクリア
-   * 役割：保存された記録を削除
-   * 目的：記録リセット時に使用
-   */
-  clearStorage() {
-    try {
-      localStorage.removeItem('bingoRecordData');
-    } catch (e) {
-      console.error('記録のクリアに失敗:', e);
-    }
-  }
-
-  // ============================================
-  // デバッグ・ユーティリティ
-  // ============================================
-
-  /**
-   * getAllData() - すべてのデータを取得
-   * 役割：記録データの全情報を返す
-   * 目的：デバッグやデータ確認に使用
-   * @returns {Object}
-   */
-  getAllData() {
-    return {
-      bestRecord: this.bestRecord ? {...this.bestRecord} : null,
-      hasBestRecord: this.hasBestRecord()
-    };
-  }
-
-  /**
-   * forceUpdateRecord(drawCount, timestamp) - 強制的に記録を更新
-   * 役割：任意の回数・日時で記録を上書き
-   * 目的：テストやデータ修正に使用（通常は使用しない）
-   * @param {number} drawCount - 抽選回数
-   * @param {number} timestamp - UNIXタイムスタンプ（ミリ秒）
-   */
-  forceUpdateRecord(drawCount, timestamp) {
-    const date = new Date(timestamp);
-    
-    this.bestRecord = {
-      drawCount: drawCount,
-      timestamp: timestamp,
-      dateString: this.formatDateTime(date)
-    };
-    
-    this.saveToStorage();
+  formatDateTime(dateString) {
+    // サーバー側で既にフォーマット済みなのでそのまま返す
+    return dateString;
   }
 }
 
