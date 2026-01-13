@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo History</title>
+    <link rel="stylesheet" href="../static/css/base.css">
+    <link rel="stylesheet" href="../static/css/effects.css">
+</head>
+
+<body>
+
+    <div class="history-container">
+        <header>
+            <h1 class="glow-text">Drawn Numbers</h1>
+            <p>これまでの履歴</p>
+        </header>
+
+        <div id="history-list" class="history-grid">
+        </div>
+
+        <footer>
+            <a href="/" class="back-button">ゲームに戻る</a>
+        </footer>
+    </div>
+
+    <script type="module" src="../static/js/effects.js"></script>
+    <script type="module">
+        import Effects from '../static/js/effects.js';
+        import bingoDataManager from '../static/js/bingodata.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // ローカルストレージからデータを持ってくる
+            bingoDataManager.loadFromStorage();
+            const history = bingoDataManager.getDrawnNumbers();
+
+            if (Effects.renderHistory) Effects.renderHistory(history);
+        });
+    </script>
+</body>
+
+</html>

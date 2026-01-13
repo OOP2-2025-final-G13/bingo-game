@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ビンゴ抽選システム</title>
+    <link rel="stylesheet" href="../static/css/index.css">
+    <link rel="stylesheet" href="../static/css/base.css">
+</head>
+
+<body>
+
+    <div class="outer-frame">
+        <div class="lottery-header">
+            <div class="header-title">抽選画面</div>
+            <div class="current-number" id="num-display">--</div>
+            <div class="btn-row">
+                <button class="top-btn" id="btn-draw">抽選</button>
+                <button class="top-btn" id="btn-history">履歴</button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="card-border">
+                <div class="bingo-grid" id="bingo-card"></div>
+            </div>
+
+            <button class="plus-area" id="btn-add-card">＋</button>
+
+            <div class="side-panel">
+                <div class="count-display">
+                    <div class="count-label">抽選回数</div>
+                    <div class="count-value" id="draw-count">0</div>
+                </div>
+                <button class="action-btn" id="btn-generate-card">カード生成</button>
+                <button class="action-btn" id="btn-reset">リセット</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Bingo Modal -->
+    <div class="modal-overlay" id="bingo-modal">
+        <div class="modal-content">
+            <div class="modal-title">BINGO!</div>
+            <p class="modal-message">やり直す場合はリセットボタンを押してください</p>
+            <div class="modal-buttons">
+                <button class="modal-btn continue" id="btn-continue">続ける</button>
+                <button class="modal-btn end" id="btn-end">終了</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../static/js/main.js"></script>
+
+</body>
+
+</html>
