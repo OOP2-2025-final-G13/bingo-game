@@ -22,34 +22,39 @@ const App = {
             this.render();
         } else {
             // データがない場合は何もしない（「カード生成」待ち）
-            // あるいは、最初の1枚を自動生成するか？
-            // 既存仕様ではボタンで生成なので待機。
             this.render();
         }
         // ===============================
         // ページ読み込み時に最短ビンゴ記録をHTMLに表示
         // ===============================
+        this.updateBestRecordUI();
+    },
+
+    /**
+     * 最短記録表示を更新する
+     */
+    updateBestRecordUI() {
         bingoRecordManager.getBestRecord().then(record => {
-        if (record) {
-             document.getElementById('record-number').textContent = record.draw_count;
-             document.getElementById('record-date').textContent = bingoRecordManager.formatDateTime(record.timestamp);
-        }
-});
+            if (record) {
+                const numEl = document.getElementById('record-number');
+                const dateEl = document.getElementById('record-date');
+                if (numEl) numEl.textContent = record.draw_count;
+                if (dateEl) dateEl.textContent = bingoRecordManager.formatDateTime(record.timestamp);
+            }
+        });
     },
 
     cacheDOM() {
         this.dom = {
             numDisplay: document.getElementById('num-display'),
             drawCount: document.getElementById('draw-count'),
-            // Container for cards (we will output multiple cards here)
-            // 既存のHTML構造: .main-layout > .card-border > #bingo-card
-            // 複数枚並べるために、.main-layout をコンテナとして使う
-            mainLayout: document.querySelector('.main-layout'), // カード追加場所の親
+
+            // Container for cards
+            mainLayout: document.querySelector('.main-layout'),
 
             btnDraw: document.getElementById('btn-draw'),
             btnHistory: document.getElementById('btn-history'),
             btnAddCard: document.getElementById('btn-add-card'),
-            // btnGenerate: document.getElementById('btn-generate-card'),
             btnReset: document.getElementById('btn-reset'),
 
             // Modal elements
@@ -61,7 +66,6 @@ const App = {
 
     bindEvents() {
         this.dom.btnDraw.addEventListener('click', () => this.handleDraw());
-        // this.dom.btnGenerate.addEventListener('click', () => this.handleGenerateCard()); // Reset & Generate 1st card
         this.dom.btnReset.addEventListener('click', () => this.handleReset());
         this.dom.btnHistory.addEventListener('click', () => this.handleShowHistory());
 
@@ -112,11 +116,6 @@ const App = {
         // カードデータ生成
         const newCard = BingoGameLogic.generateCard();
         bingoDataManager.addCard(newCard);
-
-        // 既存の抽選済み番号があれば、新しいカードにも適用すべき？
-        // 普通ビンゴでは途中参加の場合、過去の番号は埋めることが多い
-        // ここでは「手動」マーク or 自動マーク（廃止済み）
-        // ユーザーが手動で埋める運用なので、何もしない。
 
         this.render();
     },
@@ -200,13 +199,11 @@ const App = {
             const drawCount = bingoDataManager.getDrawCount();
 
             bingoRecordManager.addRecord(drawCount)
-                .then(record => {
-                if (record) {
-                    document.getElementById('record-number').textContent = record.draw_count;
-                    document.getElementById('record-date').textContent = bingoRecordManager.formatDateTime(record.timestamp);
-                }
-            })
-            .catch(err => console.error(err));
+                .then(() => {
+                    // 追加した記録ではなく、改めて「最短記録」を取得して表示更新する
+                    this.updateBestRecordUI();
+                })
+                .catch(err => console.error(err));
         }
 
         this.render();
@@ -226,11 +223,7 @@ const App = {
     },
 
     renderCards() {
-        // カードエリアをリセットするが、ボタン(.plus-area)とサイドパネル(.side-panel)は残したい
-        // しかし構造上、.main-layout の直下にカード枠、プラスボタン、サイドパネルがある。
-        // なので、一度 .main-layout の中身を整理する必要がある。
-
-        // 簡易的な方法：既存の .card-border を全て削除し、再生成して insertBefore する。
+        // カードエリアをリセット
         const existingCards = this.dom.mainLayout.querySelectorAll('.card-border');
         existingCards.forEach(el => el.remove());
 
@@ -243,7 +236,7 @@ const App = {
 
             const grid = document.createElement('div');
             grid.classList.add('bingo-grid');
-            grid.id = `bingo-card-${index}`; // Unique ID helper
+            grid.id = `bingo-card-${index}`;
 
             cardState.grid.forEach((row, rIndex) => {
                 row.forEach((value, cIndex) => {
@@ -276,7 +269,7 @@ const App = {
         if (cards.length >= 2) {
             this.dom.btnAddCard.style.display = 'none';
         } else {
-            this.dom.btnAddCard.style.display = 'flex'; // or block/inline-flex depending on CSS. .plus-area is flex.
+            this.dom.btnAddCard.style.display = 'flex';
         }
     }
 };
