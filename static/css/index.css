@@ -7,8 +7,8 @@ body {
 }
 
 .outer-frame {
-    width: 100%;         
-    max-width: 1200px;   
+    width: 100%;
+    max-width: 1200px;
     margin: 20px auto;
     border: 3px solid #000;
     padding: 20px;
@@ -24,11 +24,16 @@ body {
 .main-layout {
     display: flex;
     align-items: center;
-    justify-content: flex-start;  /* 左寄せ */
-    gap: 40px;                    /* カードとプラスボタン間隔 */
-    padding-left: 60px;           /* 左端からカードまで */
-    padding-right: 60px;          /* 右端からプラスボタンまで */
-    width: 100%;                  /* 親の幅に合わせる */
+    justify-content: flex-start;
+    /* 左寄せ */
+    gap: 40px;
+    /* カードとプラスボタン間隔 */
+    padding-left: 60px;
+    /* 左端からカードまで */
+    padding-right: 60px;
+    /* 右端からプラスボタンまで */
+    width: 100%;
+    /* 親の幅に合わせる */
     box-sizing: border-box;
 }
 
@@ -47,17 +52,17 @@ body {
     grid-column: 1 / -1;
     grid-row: 1;
 
-    position: relative;              
+    position: relative;
     padding: 30px 20px 25px;
     background: #ffffff;
 
-    border: 8px solid #1f6a8a;       
+    border: 8px solid #1f6a8a;
     border-radius: 30px;
 
     display: flex;
     flex-direction: column;
-    align-items: center;   
-    justify-content: center; 
+    align-items: center;
+    justify-content: center;
 }
 
 .lottery-header::before {
@@ -181,12 +186,12 @@ body {
     font-size: 14px;
 }
 
-.recode-number {
+.record-number {
     font-size: 28px;
     padding: 20px;
 }
 
-.recode-date {
+.record-date {
     background: #98df77;
     padding: 10px;
     font-size: 14px;
