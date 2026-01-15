@@ -5,6 +5,8 @@
 
 import bingoDataManager from './bingodata.js';
 import BingoGameLogic from './logic.js';
+import bingoRecordManager from './bingorecord.js';
+
 
 /**
  * Main App Controller
@@ -24,6 +26,15 @@ const App = {
             // 既存仕様ではボタンで生成なので待機。
             this.render();
         }
+        // ===============================
+        // ページ読み込み時に最短ビンゴ記録をHTMLに表示
+        // ===============================
+        bingoRecordManager.getBestRecord().then(record => {
+        if (record) {
+             document.getElementById('record-number').textContent = record.draw_count;
+             document.getElementById('record-date').textContent = bingoRecordManager.formatDateTime(record.timestamp);
+        }
+});
     },
 
     cacheDOM() {
@@ -38,7 +49,7 @@ const App = {
             btnDraw: document.getElementById('btn-draw'),
             btnHistory: document.getElementById('btn-history'),
             btnAddCard: document.getElementById('btn-add-card'),
-            btnGenerate: document.getElementById('btn-generate-card'),
+            // btnGenerate: document.getElementById('btn-generate-card'),
             btnReset: document.getElementById('btn-reset'),
 
             // Modal elements
@@ -50,7 +61,7 @@ const App = {
 
     bindEvents() {
         this.dom.btnDraw.addEventListener('click', () => this.handleDraw());
-        this.dom.btnGenerate.addEventListener('click', () => this.handleGenerateCard()); // Reset & Generate 1st card
+        // this.dom.btnGenerate.addEventListener('click', () => this.handleGenerateCard()); // Reset & Generate 1st card
         this.dom.btnReset.addEventListener('click', () => this.handleReset());
         this.dom.btnHistory.addEventListener('click', () => this.handleShowHistory());
 
@@ -179,10 +190,23 @@ const App = {
         // ビンゴ通知制御 (1回だけ)
         const isAnnounced = bingoDataManager.isBingoAnnounced(cardIndex);
 
+        // ===============================
+        // ビンゴ達成時：最短記録をサーバーに送信＆HTML更新
+        // ===============================
         if (lines.length > 0 && !isAnnounced) {
-            console.log(`Card ${cardIndex + 1} BINGO!`, lines);
             this.showModal();
             bingoDataManager.setBingoAnnounced(cardIndex, true);
+
+            const drawCount = bingoDataManager.getDrawCount();
+
+            bingoRecordManager.addRecord(drawCount)
+                .then(record => {
+                if (record) {
+                    document.getElementById('record-number').textContent = record.draw_count;
+                    document.getElementById('record-date').textContent = bingoRecordManager.formatDateTime(record.timestamp);
+                }
+            })
+            .catch(err => console.error(err));
         }
 
         this.render();

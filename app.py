@@ -101,8 +101,9 @@ def add_record(draw_count):
     conn.commit()
     conn.close()
     
-    # 新記録かどうかを判定
-    is_new_record = (best_record is None) or (draw_count < best_record['draw_count'])
+    # 新記録かどうかを判定（DB上の最新の最短記録IDと、今回追加したIDが一致するか）
+    best_record = get_best_record()
+    is_new_record = (best_record is not None) and (best_record['id'] == record_id)
     
     return {
         'id': record_id,
