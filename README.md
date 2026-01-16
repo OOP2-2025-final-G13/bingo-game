@@ -1,4 +1,4 @@
-# BINGO GAME（ビンゴゲーム）
+# BINGO GAME
 
 イベントやレクリエーションを盛り上げるための、直感的で使いやすいビンゴ抽選Webアプリケーションです。
 
@@ -14,7 +14,7 @@
 - [使い方](#使い方)
 - [技術スタック](#技術スタック)
 - [ディレクトリ構成](#ディレクトリ構成)
-- [開発体制・お問い合わせ](#開発体制・お問い合わせ)
+- [お問い合わせ](#お問い合わせ)
 
 ---
 
@@ -51,13 +51,13 @@ PCやスマートフォンなど、デバイスを問わずに利用でき、プ
 
 ## デモ
 
-**※ 動作の様子（GIFアニメーション）**
-
-* 抽選画面
-  `![Main Demo](path/to/demo.gif)`
+* カード生成 ~ 抽選
+  ![lottery](https://github.com/user-attachments/assets/629a6373-bcbb-4511-9fa4-5ff4a0c8d0af)
+* BINGO 成立
+  ![bingo](https://github.com/user-attachments/assets/0305972c-321e-4410-9540-5525cb4ba2ab)
 * 履歴画面
-  `![History Demo](path/to/demo.gif)`
-
+  ![history](https://github.com/user-attachments/assets/a273f4d2-2c47-487f-89f2-9b5c4e931b7c)
+  
 ## セットアップ
 
 ### 必要パッケージ
@@ -111,7 +111,7 @@ python app.py
     └── history.html       # 履歴画面 (FE2)
 ```
 
-## 開発体制・お問い合わせ
+## お問い合わせ
 
 機能ごとの担当者および連絡先（GitHubアカウント）は以下の通りです。バグ報告や機能に関するお問い合わせは、各担当者までお願いします。
 
